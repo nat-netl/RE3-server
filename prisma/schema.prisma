@@ -1,0 +1,60 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskType {
+  CHANNEL
+  TOKEN
+}
+
+model User {
+  id              Int                  @id @default(autoincrement())
+  telegramId      String               @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  walletAddress   String?              @unique
+  balance         Float                @default(0)
+  referralCode    String               @unique
+  referredBy      User?                @relation("ReferralRelation", fields: [referredById], references: [id])
+  referredById    Int?
+  referrals       User[]               @relation("ReferralRelation")
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  taskCompletions UserTaskCompletion[]
+}
+
+model Task {
+  id                  Int                  @id @default(autoincrement())
+  type                TaskType
+  title               String
+  description         String
+  reward              Float
+  channelUsername     String?
+  tokenAddress        String?
+  tokenAmount         Float?
+  maxParticipants     Int?
+  currentParticipants Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  completions         UserTaskCompletion[]
+}
+
+model UserTaskCompletion {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  taskId       Int
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  earnedAmount Float
+  user         User      @relation(fields: [userId], references: [id])
+  task         Task      @relation(fields: [taskId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
